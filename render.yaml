@@ -1,0 +1,43 @@
+services:
+  - type: web
+    name: betty-abonnement-v3
+    runtime: python
+    region: frankfurt
+    plan: starter
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app -b 0.0.0.0:$PORT --workers 2 --threads 4 --timeout 120
+    envVars:
+      - key: FLASK_SECRET_KEY
+        generateValue: true
+      - key: SESSION_SECURE
+        value: "true"
+      - key: BASE_URL
+        # ⚠️ Remplace cette valeur par l’URL finale Render après le premier déploiement
+        value: "https://betty-abonnement-v3.onrender.com"
+      - key: TOGETHER_API_KEY
+        sync: false
+      - key: LLM_MODEL
+        value: "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo"
+      - key: LLM_MAX_TOKENS
+        value: "256"
+      - key: MJ_API_KEY
+        sync: false
+      - key: MJ_API_SECRET
+        sync: false
+      - key: MJ_FROM_EMAIL
+        value: "no-reply@spectramedia.online"
+      - key: MJ_FROM_NAME
+        value: "Spectra Media AI Betty Bots"
+      - key: STRIPE_SECRET_KEY
+        sync: false
+      - key: STRIPE_PRICE_ID
+        sync: false
+      - key: DEFAULT_LEAD_EMAIL
+        value: "vincent@spectramedia.online"
+      - key: DB_PATH
+        value: "/var/data/app.db"
+    disk:
+      name: dbdisk
+      mountPath: /var/data
+      sizeGB: 1
+    healthCheckPath: /healthz
