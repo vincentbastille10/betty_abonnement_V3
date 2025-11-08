@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1>Configurer votre chatbot</h1>
+<p class="intro">Choisissez un métier, une couleur, ajustez la personnalité et personnalisez le message d’accueil.</p>
+
+<form method="POST" action="{{ url_for('config_page') }}" id="cfg-form" class="cfg-grid">
+
+  <!-- Métier / Avatar -->
+  <section class="card">
+    <h2>Métier</h2>
+    <div class="avatar-grid">
+      <!-- Avocat -->
+      <label class="avatar-card">
+        <input type="radio" name="pack" value="avocat" checked>
+        <img src="{{ url_for('static', filename='avocat.jpg') }}" alt="Avocat">
+        <div class="a-label">Avocat</div>
+        <!-- on envoie aussi le fichier avatar -->
+        <input type="hidden" name="avatar" value="avocat.jpg">
+      </label>
+
+      <!-- Médecin -->
+      <label class="avatar-card">
+        <input type="radio" name="pack" value="medecin">
+        <img src="{{ url_for('static', filename='medecin.jpg') }}" alt="Médecin">
+        <div class="a-label">Médecin</div>
+        <input type="hidden" name="avatar" value="medecin.jpg">
+      </label>
+
+      <!-- Immobilier -->
+      <label class="avatar-card">
+        <input type="radio" name="pack" value="immo">
+        <img src="{{ url_for('static', filename='immo.jpg') }}" alt="Immobilier">
+        <div class="a-label">Immobilier</div>
+        <input type="hidden" name="avatar" value="immo.jpg">
+      </label>
+
+      <!-- (Optionnel) Notaire -->
+      <label class="avatar-card">
+        <input type="radio" name="pack" value="notaire">
+        <img src="{{ url_for('static', filename='notaire.jpg') }}" alt="Notaire" onerror="this.parentElement.style.display='none'">
+        <div class="a-label">Notaire</div>
+        <input type="hidden" name="avatar" value="notaire.jpg">
+      </label>
+    </div>
+    <small class="hint">Cliquez pour sélectionner. Taille d’affichage : 4 cm × 4 cm.</small>
+  </section>
+
+  <!-- Couleurs -->
+  <section class="card">
+    <h2>Couleur</h2>
+    <div class="color-grid">
+      <label class="color-swatch" style="--c:#4F46E5">
+        <input type="radio" name="color" value="#4F46E5" checked>
+      </label>
+      <label class="color-swatch" style="--c:#16A34A">
+        <input type="radio" name="color" value="#16A34A">
+      </label>
+      <label class="color-swatch" style="--c:#0284C7">
+        <input type="radio" name="color" value="#0284C7">
+      </label>
+      <label class="color-swatch" style="--c:#DB2777">
+        <input type="radio" name="color" value="#DB2777">
+      </label>
+      <label class="color-swatch" style="--c:#F59E0B">
+        <input type="radio" name="color" value="#F59E0B">
+      </label>
+      <label class="color-swatch" style="--c:#10B981">
+        <input type="radio" name="color" value="#10B981">
+      </label>
+    </div>
+  </section>
+
+  <!-- Personnalité (curseur 2D) -->
+  <section class="card">
+    <h2>Personnalité</h2>
+    <div class="axes-wrap">
+      <div class="axis-label top">Chaleureuse</div>
+      <div class="axis-label left">Empathique</div>
+      <div class="joystick" id="joy">
+        <div class="thumb" id="thumb"></div>
+      </div>
+      <div class="axis-label right">Efficace</div>
+      <div class="axis-label bottom">Précise</div>
+    </div>
+    <input type="hidden" name="persona_x" id="persona_x" value="0">
+    <input type="hidden" name="persona_y" id="persona_y" value="0">
+    <small class="hint">Déplacez le curseur dans la zone : gauche = empathique, droite = efficace, haut = chaleureuse, bas = précise.</small>
+  </section>
+
+  <!-- Contenus -->
+  <section class="card">
+    <h2>Contenus</h2>
+    <label class="field">
+      <span>Message d’accueil</span>
+      <input type="text" name="greeting" placeholder="Bonjour, je suis Betty. Comment puis-je vous aider ?">
+    </label>
+
+    <label class="field">
+      <span>Informations établissement (téléphone, email, adresse, horaires…)</span>
+      <textarea name="contact_info" rows="4" placeholder="Nom : Cabinet Dupont
+Téléphone : 02 43 XX XX XX
+Email : contact@cabinet-dupont.fr
+Adresse : 12 rue de la République, 72000 Le Mans
+Horaires : Lun–Ven 9h–12h / 14h–18h"></textarea>
+    </label>
+  </section>
+
+  <!-- CTA -->
+  <div class="cta">
+    <button type="submit" class="btn primary big">Enregistrer et s’abonner</button>
+  </div>
+</form>
+
+<script>
+  // --- Sélection avatar : quand on clique sur un avatar, mettre le bon fichier 'avatar' lié au pack ---
+  const avatarCards = document.querySelectorAll('.avatar-card');
+  avatarCards.forEach(card => {
+    card.addEventListener('click', () => {
+      // retire l'état sélectionné visuel
+      avatarCards.forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+
+      // garde le <input name="avatar"> du label cliqué et désactive les autres
+      const packInput = card.querySelector('input[type="radio"][name="pack"]');
+      const allPackInputs = document.querySelectorAll('input[type="radio"][name="pack"]');
+      allPackInputs.forEach(r => r.checked = false);
+      packInput.checked = true;
+
+      // synchronise le champ avatar caché global: on prend la valeur du hidden de la carte
+      const avatarFile = card.querySelector('input[type="hidden"][name="avatar"]').value;
+      // crée/maj un input hidden global unique "avatar" pour le form
+      let globalAvatar = document.querySelector('input[name="_avatar_global"]');
+      if(!globalAvatar){
+        globalAvatar = document.createElement('input');
+        globalAvatar.type = 'hidden';
+        globalAvatar.name = '_avatar_global';
+        document.getElementById('cfg-form').appendChild(globalAvatar);
+      }
+      globalAvatar.value = avatarFile;
+    });
+  });
+
+  // Au submit, remap _avatar_global -> avatar (compat route)
+  document.getElementById('cfg-form').addEventListener('submit', (e)=>{
+    const gv = document.querySelector('input[name="_avatar_global"]');
+    if(gv){
+      const real = document.createElement('input');
+      real.type = 'hidden';
+      real.name = 'avatar';
+      real.value = gv.value || 'avocat.jpg';
+      e.target.appendChild(real);
+    }
+  });
+
+  // --- Joystick 2D (axes -1..+1) ---
+  const joy = document.getElementById('joy');
+  const thumb = document.getElementById('thumb');
+  const ix = document.getElementById('persona_x');
+  const iy = document.getElementById('persona_y');
+
+  const size = 220;         // taille en px du carré (CSS ci-dessous aussi)
+  const radius = (size/2);  // demi-côté
+
+  let dragging = false;
+
+  function setThumbFromEvent(ev){
+    const rect = joy.getBoundingClientRect();
+    let x = (ev.clientX ?? (ev.touches && ev.touches[0].clientX)) - rect.left;
+    let y = (ev.clientY ?? (ev.touches && ev.touches[0].clientY)) - rect.top;
+
+    // clamp dans le carré
+    x = Math.max(0, Math.min(size, x));
+    y = Math.max(0, Math.min(size, y));
+
+    // centre -> -1..+1
+    const nx = (x - radius) / radius; // gauche -1, droite +1
+    const ny = (radius - y) / radius; // haut +1, bas -1  (on inversera pour correspondre à la consigne)
+    // conversion demandée: haut=chaleureuse => y positif; bas=précise => y négatif
+    ix.value = nx.toFixed(2);
+    iy.value = ny.toFixed(2);
+
+    thumb.style.left = (x - 10) + 'px';
+    thumb.style.top  = (y - 10) + 'px';
+  }
+
+  function startDrag(ev){ dragging = true; setThumbFromEvent(ev); }
+  function moveDrag(ev){ if(dragging){ ev.preventDefault(); setThumbFromEvent(ev); } }
+  function endDrag(){ dragging = false; }
+
+  joy.addEventListener('mousedown', startDrag);
+  joy.addEventListener('mousemove', moveDrag);
+  window.addEventListener('mouseup', endDrag);
+
+  joy.addEventListener('touchstart', startDrag, {passive:false});
+  joy.addEventListener('touchmove',  moveDrag,  {passive:false});
+  window.addEventListener('touchend', endDrag);
+
+  // position initiale au centre
+  thumb.style.left = (radius - 10) + 'px';
+  thumb.style.top  = (radius - 10) + 'px';
+</script>
+
+{% endblock %}
